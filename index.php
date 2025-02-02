@@ -14,7 +14,7 @@ session_start();
 
 // Connect to SQLite database
 try {
-    $db = new PDO('sqlite:../../../databases/steelblue.sqlite'); // Ensure the path is correct
+    $db = new PDO('sqlite:../databases/mediumslateblue.sqlite'); // Ensure the path is correct
     $db->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
 
     // Create tables if they don't exist
@@ -385,9 +385,9 @@ if ($action == 'view_shared' && isset($shared_doc)) {
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <title>jocarsa | steelblue</title>
+    <title>jocarsa | mediumslateblue</title>
     <link rel="stylesheet" href="css/estilo.css">
-    <link rel="icon" type="image/svg+xml" href="https://jocarsa.com/static/logo/jocarsa | SteelBlue.svg" />
+    <link rel="icon" type="image/svg+xml" href="mediumslateblue.png" />
     <!-- Optional Snow Effect -->
     <link rel="stylesheet" href="https://jocarsa.github.io/jocarsa-snow/jocarsa%20%7C%20snow.css">
     <script src="https://jocarsa.github.io/jocarsa-snow/jocarsa%20%7C%20snow.js" defer></script>
@@ -402,8 +402,8 @@ if ($action == 'view_shared' && isset($shared_doc)) {
     <header>
         <div class="title">
        
-            <img src="https://jocarsa.com/static/logo/jocarsa | White.svg" alt="Logo">
-             <a href="?">jocarsa | steelblue
+            <img src="mediumslateblue.png" alt="Logo">
+             <a href="?">jocarsa | mediumslateblue
             
           </a>
         </div>
