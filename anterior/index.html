@@ -1,0 +1,561 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>jocarsa | steelblue</title>
+    <link rel="stylesheet" href="estilo.css">
+    <link rel="icon" type="image/svg+xml" href="https://jocarsa.com/static/logo/jocarsa%20%7C%20steelblue.svg" />
+</head>
+<body>
+    <!-- Header -->
+    <header>
+        <div class="title">
+            <img src="https://jocarsa.com/static/logo/jocarsa%20%7C%20steelblue.svg" alt="Logo">
+            jocarsa | steelblue
+        </div>
+        <div class="nav-buttons">
+            <button id="login-btn">Login</button>
+            <button id="signup-btn">Sign Up</button>
+            <button id="logout-btn" class="hidden">Logout</button>
+            <button id="new-doc-btn" class="hidden">+ New Document</button>
+            <button id="back-btn" class="hidden">Back to Documents</button>
+        </div>
+    </header>
+
+    <div id="container">
+        <!-- Login Form -->
+        <div id="login-form" class="form-container hidden">
+            <h2>Login</h2>
+            <form id="login">
+                <input type="text" id="login-username" placeholder="Username" required>
+                <input type="password" id="login-password" placeholder="Password" required>
+                <button type="submit">Login</button>
+            </form>
+            <p>Don't have an account? <a href="#" id="show-signup">Sign up here</a></p>
+        </div>
+
+        <!-- Signup Form -->
+        <div id="signup-form" class="form-container hidden">
+            <h2>Sign Up</h2>
+            <form id="signup">
+                <input type="text" id="signup-username" placeholder="Username" required>
+                <input type="password" id="signup-password" placeholder="Password" required>
+                <button type="submit">Sign Up</button>
+            </form>
+            <p>Already have an account? <a href="#" id="show-login">Login here</a></p>
+        </div>
+
+        <!-- Dashboard -->
+        <div id="dashboard" class="hidden">
+            <!-- Document List -->
+            <div id="document-list">
+                <h3>Your Documents</h3>
+                <div id="docs-grid">
+                    <!-- Document cards will be inserted here -->
+                </div>
+            </div>
+
+            <!-- Editor Container -->
+            <div id="editor-container" class="hidden">
+                <textarea id="editor" placeholder="Select a document to edit..."></textarea>
+                <div class="editor-actions">
+                    <button id="save-doc">Save Document</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- External CSS and JS for Snow Effect (Optional) -->
+    <link rel="stylesheet" href="https://jocarsa.github.io/jocarsa-snow/jocarsa%20%7C%20snow.css">
+    <script src="https://jocarsa.github.io/jocarsa-snow/jocarsa%20%7C%20snow.js" defer></script>
+
+    <!-- Test Button for Manual Assignment (Optional) -->
+    <button id="test-btn">Test Editor</button>
+
+    <!-- Main JavaScript -->
+    <script>
+        // Frontend JavaScript
+        document.addEventListener('DOMContentLoaded', () => {
+            const loginForm = document.getElementById('login-form');
+            const signupForm = document.getElementById('signup-form');
+            const dashboard = document.getElementById('dashboard');
+            const documentList = document.getElementById('document-list');
+            const docsGrid = document.getElementById('docs-grid');
+            const editorContainer = document.getElementById('editor-container');
+            const editor = document.getElementById('editor');
+                console.log("Editor Element:", editor);
+
+
+            const loginBtn = document.getElementById('login-btn');
+            const signupBtn = document.getElementById('signup-btn');
+            const logoutBtn = document.getElementById('logout-btn');
+            const newDocBtn = document.getElementById('new-doc-btn');
+            const backBtn = document.getElementById('back-btn');
+
+            const showSignup = document.getElementById('show-signup');
+            const showLogin = document.getElementById('show-login');
+
+            const login = document.getElementById('login');
+            const signup = document.getElementById('signup');
+            const saveDocBtn = document.getElementById('save-doc');
+
+            const testBtn = document.getElementById('test-btn'); // Test Button
+
+            let currentDocId = null;
+
+            // Utility function to hide all main sections
+            function hideAllSections() {
+                loginForm.classList.add('hidden');
+                signupForm.classList.add('hidden');
+                dashboard.classList.add('hidden');
+                editorContainer.classList.add('hidden');
+            }
+
+            // Show Login Form
+            loginBtn.addEventListener('click', () => {
+                hideAllSections();
+                loginForm.classList.remove('hidden');
+            });
+
+            // Show Signup Form
+            signupBtn.addEventListener('click', () => {
+                hideAllSections();
+                signupForm.classList.remove('hidden');
+            });
+
+            // Toggle to Signup from Login
+            showSignup.addEventListener('click', (e) => {
+                e.preventDefault();
+                loginForm.classList.add('hidden');
+                signupForm.classList.remove('hidden');
+            });
+
+            // Toggle to Login from Signup
+            showLogin.addEventListener('click', (e) => {
+                e.preventDefault();
+                signupForm.classList.add('hidden');
+                loginForm.classList.remove('hidden');
+            });
+
+            // Handle Signup
+            signup.addEventListener('submit', (e) => {
+                e.preventDefault();
+                const username = document.getElementById('signup-username').value.trim();
+                const password = document.getElementById('signup-password').value;
+
+                if(username.length < 3){
+                    alert('Username must be at least 3 characters.');
+                    return;
+                }
+                if(password.length < 6){
+                    alert('Password must be at least 6 characters.');
+                    return;
+                }
+
+                fetch('backend.php', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({
+                        action: 'signup',
+                        username,
+                        password
+                    })
+                })
+                .then(res => res.json())
+                .then(data => {
+                    if(data.success){
+                        alert('Signup successful! Please login.');
+                        signupForm.classList.add('hidden');
+                        loginForm.classList.remove('hidden');
+                    } else {
+                        alert(data.message);
+                    }
+                })
+                .catch(err => {
+                    console.error('Error:', err);
+                    alert('An error occurred. Please try again.');
+                });
+            });
+
+            // Handle Login
+            login.addEventListener('submit', (e) => {
+                e.preventDefault();
+                const username = document.getElementById('login-username').value.trim();
+                const password = document.getElementById('login-password').value;
+
+                console.log("Attempting to log in with Username:", username);
+
+                fetch('backend.php', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({
+                        action: 'login',
+                        username,
+                        password
+                    })
+                })
+                .then(res => res.json())
+                .then(data => {
+                    console.log("Login Response:", data);
+                    if(data.success){
+                        hideAllSections();
+                        // Show dashboard & document list, hide editor container
+                        dashboard.classList.remove('hidden');
+                        documentList.classList.remove('hidden');
+                        editorContainer.classList.add('hidden');
+                        updateHeader(true);
+                        loadDocuments();
+                    } else {
+                        alert(data.message);
+                    }
+                })
+                .catch(err => {
+                    console.error('Error:', err);
+                    alert('An error occurred. Please try again.');
+                });
+            });
+
+            // Update Header Buttons Based on Authentication
+            function updateHeader(isLoggedIn){
+                if(isLoggedIn){
+                    loginBtn.classList.add('hidden');
+                    signupBtn.classList.add('hidden');
+                    logoutBtn.classList.remove('hidden');
+                    newDocBtn.classList.remove('hidden');
+                    backBtn.classList.add('hidden');
+                } else {
+                    loginBtn.classList.remove('hidden');
+                    signupBtn.classList.remove('hidden');
+                    logoutBtn.classList.add('hidden');
+                    newDocBtn.classList.add('hidden');
+                    backBtn.classList.add('hidden');
+                }
+            }
+
+            // Handle Logout
+            logoutBtn.addEventListener('click', () => {
+                fetch('backend.php', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({
+                        action: 'logout'
+                    })
+                })
+                .then(res => res.json())
+                .then(data => {
+                    if(data.success){
+                        hideAllSections();
+                        updateHeader(false);
+                        loginForm.classList.remove('hidden');
+                        editor.value = '';
+                        currentDocId = null;
+                        docsGrid.innerHTML = '';
+                    } else {
+                        alert(data.message);
+                    }
+                })
+                .catch(err => {
+                    console.error('Error:', err);
+                    alert('An error occurred. Please try again.');
+                });
+            });
+
+            // Handle New Document Creation
+            newDocBtn.addEventListener('click', () => {
+                const docName = prompt('Enter the name of the new document:');
+                if(docName && docName.trim() !== ''){
+                    fetch('backend.php', {
+                        method: 'POST',
+                        headers: {'Content-Type': 'application/json'},
+                        body: JSON.stringify({
+                            action: 'create_document',
+                            name: docName.trim()
+                        })
+                    })
+                    .then(res => res.json())
+                    .then(data => {
+                        if(data.success){
+                            loadDocuments();
+                        } else {
+                            alert(data.message);
+                        }
+                    })
+                    .catch(err => {
+                        console.error('Error:', err);
+                        alert('An error occurred. Please try again.');
+                    });
+                } else {
+                    alert('Document name cannot be empty.');
+                }
+            });
+
+            // Handle Back to Documents
+            backBtn.addEventListener('click', () => {
+                editorContainer.classList.add('hidden');
+                documentList.classList.remove('hidden');
+                backBtn.classList.add('hidden');
+                newDocBtn.classList.remove('hidden');
+                currentDocId = null;
+                editor.value = '';
+            });
+
+            // Handle Save Document
+            saveDocBtn.addEventListener('click', () => {
+                console.log("Saving document with ID:", currentDocId); // Debugging line
+                if(!currentDocId){
+                    alert('No document selected.');
+                    return;
+                }
+                const content = editor.value;
+                fetch('backend.php', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Cache-Control': 'no-cache, no-store, must-revalidate',
+                        'Pragma': 'no-cache',
+                        'Expires': '0'
+                    },
+                    body: JSON.stringify({
+                        action: 'save_document',
+                        id: currentDocId,
+                        content
+                    })
+                })
+                .then(res => res.json())
+                .then(data => {
+                    if(data.success){
+                        alert('Document saved successfully.');
+                    } else {
+                        alert(data.message);
+                    }
+                })
+                .catch(err => {
+                    console.error('Error:', err);
+                    alert('An error occurred while saving the document.');
+                });
+            });
+
+            // Load Documents as Grid
+            function loadDocuments(){
+                fetch('backend.php', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Cache-Control': 'no-cache, no-store, must-revalidate',
+                        'Pragma': 'no-cache',
+                        'Expires': '0'
+                    },
+                    body: JSON.stringify({
+                        action: 'get_documents'
+                    })
+                })
+                .then(res => res.json())
+                .then(data => {
+                    if(data.success){
+                        docsGrid.innerHTML = '';
+                        if(data.documents.length === 0){
+                            docsGrid.innerHTML = '<p>No documents found. Create a new document to get started.</p>';
+                            return;
+                        }
+                        data.documents.forEach(doc => {
+                            const card = document.createElement('div');
+                            card.classList.add('doc-card');
+                            card.dataset.id = doc.id;
+
+                            const title = document.createElement('h4');
+                            title.textContent = doc.name;
+                            card.appendChild(title);
+
+                            // Action buttons
+                            const actionDiv = document.createElement('div');
+                            actionDiv.classList.add('action-buttons');
+
+                            const renameBtn = document.createElement('button');
+                            renameBtn.textContent = 'Rename';
+                            renameBtn.addEventListener('click', (e) => {
+                                e.stopPropagation();
+                                const newName = prompt('Enter new document name:', doc.name);
+                                if(newName && newName.trim() !== ''){
+                                    renameDocument(doc.id, newName.trim());
+                                } else {
+                                    alert('Document name cannot be empty.');
+                                }
+                            });
+
+                            const deleteBtn = document.createElement('button');
+                            deleteBtn.textContent = 'Delete';
+                            deleteBtn.classList.add('delete');
+                            deleteBtn.addEventListener('click', (e) => {
+                                e.stopPropagation();
+                                if(confirm('Are you sure you want to delete this document?')){
+                                    deleteDocument(doc.id);
+                                }
+                            });
+
+                            actionDiv.appendChild(renameBtn);
+                            actionDiv.appendChild(deleteBtn);
+                            card.appendChild(actionDiv);
+
+                            // Click to Open Document
+                            card.addEventListener('click', () => {
+                                openDocument(doc.id);
+                            });
+
+                            docsGrid.appendChild(card);
+                        });
+                        documentList.classList.remove('hidden');
+                        editorContainer.classList.add('hidden');
+                    } else {
+                        alert(data.message);
+                    }
+                })
+                .catch(err => {
+                    console.error('Error:', err);
+                    alert('An error occurred while loading documents.');
+                });
+            }
+
+            // Rename Document
+            function renameDocument(id, newName){
+                fetch('backend.php', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({
+                        action: 'rename_document',
+                        id,
+                        new_name: newName
+                    })
+                })
+                .then(res => res.json())
+                .then(data => {
+                    if(data.success){
+                        loadDocuments();
+                        if(currentDocId === id){
+                            alert('Document renamed successfully.');
+                        }
+                    } else {
+                        alert(data.message);
+                    }
+                })
+                .catch(err => {
+                    console.error('Error:', err);
+                    alert('An error occurred while renaming the document.');
+                });
+            }
+
+            // Delete Document
+            function deleteDocument(id){
+                fetch('backend.php', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({
+                        action: 'delete_document',
+                        id
+                    })
+                })
+                .then(res => res.json())
+                .then(data => {
+                    if(data.success){
+                        if(currentDocId === id){
+                            editor.value = '';
+                            currentDocId = null;
+                            editorContainer.classList.add('hidden');
+                            documentList.classList.remove('hidden');
+                        }
+                        loadDocuments();
+                        alert('Document deleted successfully.');
+                    } else {
+                        alert(data.message);
+                    }
+                })
+                .catch(err => {
+                    console.error('Error:', err);
+                    alert('An error occurred while deleting the document.');
+                });
+            }
+
+            // Open Document in Editor
+            function openDocument(id){
+                console.log("Opening document with ID:", id); // Debugging line
+                currentDocId = id;
+                fetch('backend.php', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Cache-Control': 'no-cache, no-store, must-revalidate',
+                        'Pragma': 'no-cache',
+                        'Expires': '0'
+                    },
+                    body: JSON.stringify({
+                        action: 'get_document',
+                        id
+                    })
+                })
+                .then(res => res.json())
+                .then(data => {
+                    console.log("Received content for ID:", id, "Content:", data.content); // Debugging line
+                    editor.value = data.content;
+                    console.log("okokok")
+                    if(data.success){
+                        editor.value = data.content;
+                        editor.value = "Hola que tal"
+                        documentList.classList.add('hidden');
+                        editorContainer.classList.remove('hidden');
+                        backBtn.classList.remove('hidden');
+                        newDocBtn.classList.add('hidden');
+                    } else {
+                        alert(data.message);
+                    }
+                })
+                .catch(err => {
+                    console.error('Error:', err);
+                    alert('An error occurred while fetching the document.');
+                });
+            }
+
+            // Initial Check if User is Already Logged In
+            function checkSession(){
+                fetch('backend.php', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Cache-Control': 'no-cache, no-store, must-revalidate',
+                        'Pragma': 'no-cache',
+                        'Expires': '0'
+                    },
+                    body: JSON.stringify({
+                        action: 'check_session'
+                    })
+                })
+                .then(res => res.json())
+                .then(data => {
+                    if(data.logged_in){
+                        hideAllSections();
+                        dashboard.classList.remove('hidden');
+                        documentList.classList.remove('hidden');
+                        editorContainer.classList.add('hidden');
+                        updateHeader(true);
+                        loadDocuments();
+                    } else {
+                        hideAllSections();
+                        loginForm.classList.remove('hidden');
+                        updateHeader(false);
+                    }
+                })
+                .catch(err => {
+                    console.error('Error:', err);
+                });
+            }
+
+            checkSession();
+
+            // Test Button for Manual Assignment (Optional)
+            testBtn.addEventListener('click', () => {
+                console.log("Test Button Clicked. Assigning test content to editor.");
+                editor.value = "This is a test content to verify the editor.";
+            });
+        });
+    </script>
+</body>
+</html>
+
